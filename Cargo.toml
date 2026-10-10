@@ -1,0 +1,33 @@
+[package]
+name = "local-jev"
+version = "0.1.0"
+edition = "2024"
+authors = ["Ronit Gupta <ronitgupta138@gmail.com>"]
+description = "100% Offline, Zero-Cost Drop-In Alternative to TypeSafe Jev System One Decision Models in Rust"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/ronitgupta138/local-jev"
+
+[dependencies]
+axum = { version = "0.7", features = ["macros"] }
+tokio = { version = "1.40", features = ["full"] }
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+tower = { version = "0.4", features = ["util"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+clap = { version = "4.5", features = ["derive", "env"] }
+colored = "2.1"
+thiserror = "2.0"
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+tempfile = "3.13"
+http-body-util = "0.1"
+
+[[bin]]
+name = "local-jev"
+path = "src/main.rs"
+
+[lib]
+name = "local_jev"
+path = "src/lib.rs"
