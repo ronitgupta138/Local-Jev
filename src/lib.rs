@@ -5,3 +5,4 @@ pub mod engine;
 pub mod server;
 pub mod mcp;
 pub mod telemetry;
+pub mod model;
