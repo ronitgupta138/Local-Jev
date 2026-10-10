@@ -9,3 +9,4 @@ pub mod model;
 pub mod tensor;
 pub mod cascade;
 pub mod bandit;
+pub mod vector;
