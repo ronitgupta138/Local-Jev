@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "local-jev"
+version = "0.5.0"
+authors = [
+  { name = "Ronit Gupta", email = "ronitgupta138@gmail.com" },
+]
+description = "100% Offline, Zero-Cost Drop-In Alternative to TypeSafe Jev System One Decisions"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]

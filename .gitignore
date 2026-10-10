@@ -2,3 +2,6 @@
 *.tmp
 *.bak
 .env
+dist/
+build/
+*.egg-info/

@@ -12,10 +12,10 @@
 ### **100% Offline, Zero-Cost Drop-In Alternative to TypeSafe Jev System One Decisions**
 
 [![GitHub Stars](https://img.shields.io/github/stars/ronitgupta138/local-jev?style=flat-square&color=0891b2&labelColor=0a0b0e)](https://github.com/ronitgupta138/local-jev/stargazers)
-[![Crates.io](https://img.shields.io/badge/crates.io-v0.1.0-0891b2?style=flat-square&labelColor=0a0b0e)](https://crates.io/crates/local-jev)
+[![Crates.io](https://img.shields.io/badge/crates.io-v0.5.0-0891b2?style=flat-square&labelColor=0a0b0e)](https://crates.io/crates/local-jev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0891b2?style=flat-square&labelColor=0a0b0e)](LICENSE)
 [![Rust: 1.80+](https://img.shields.io/badge/Rust-1.80+-0891b2?style=flat-square&labelColor=0a0b0e)](https://www.rust-lang.org)
-[![Build Status](https://img.shields.io/badge/Tests-5%2F5%20Passing-0891b2?style=flat-square&labelColor=0a0b0e)](#-verification--benchmarks)
+[![Build Status](https://img.shields.io/badge/Tests-12%2F12%20Passing-0891b2?style=flat-square&labelColor=0a0b0e)](#-verification--benchmarks)
 [![Views](https://hits.sh/github.com/ronitgupta138/local-jev.svg?style=flat-square&label=Views&color=0891b2&labelColor=0a0b0e)](https://hits.sh/github.com/ronitgupta138/local-jev/)
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?style=flat-square&labelColor=0a0b0e)](https://github.com/sponsors/ronitgupta138)
 
@@ -150,6 +150,56 @@ local-jev benchmark --iterations 1000
 
 ---
 
+## 💻 Client SDKs (Python & TypeScript)
+
+### Python SDK (`local-jev`)
+```python
+from local_jev import JevClient
+
+client = JevClient("http://localhost:8080/v1")
+
+# Single-pass choice selection
+decision = client.choice(
+    state="Compiler unresolved import crate::auth::User",
+    question="Which tool to search the codebase?",
+    options=["grep", "docker", "curl"]
+)
+print("Selected tool:", decision["choice"])  # "grep"
+```
+
+### TypeScript SDK (`local-jev`)
+```typescript
+import { JevClient } from "local-jev";
+
+const client = new JevClient("http://localhost:8080/v1");
+const res = await client.choice(
+  "Database connection pool exhausted",
+  "Which mitigation action should be selected?",
+  ["scale_pool", "reboot_host", "ignore"]
+);
+console.log(res.choice); // "scale_pool"
+```
+
+---
+
+## 🤖 Model Context Protocol (MCP) Integration
+
+`local-jev` includes a native stdio Model Context Protocol (MCP) server for **Claude Desktop, Cursor, and Hermes Agent**.
+
+### Add to Claude Desktop (`claude_desktop_config.json`)
+```json
+{
+  "mcpServers": {
+    "local-jev": {
+      "command": "local-jev",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+---
+
 ## 🧪 Verification & Benchmarks
 
 ```bash
@@ -157,14 +207,21 @@ cargo test
 ```
 
 ```
-running 5 tests
+running 12 tests
 test test_semantic_score_relevance ... ok
 test test_choice_selection_accuracy ... ok
 test test_agent_noul_classification ... ok
 test test_fast_route_classification ... ok
 test test_typesafe_http_server_endpoints ... ok
+test test_mcp_initialize_and_tool_list ... ok
+test test_mcp_call_choice_tool ... ok
+test test_model_backbone_default_mode ... ok
+test test_model_backbone_file_loader ... ok
+test test_model_backbone_missing_file_error ... ok
+test test_prometheus_metrics_export ... ok
+test test_microbatch_scheduler_concurrent_queries ... ok
 
-test result: ok. 5 passed; 0 failed; 0 ignored; finished in 0.00s
+test result: ok. 12 passed; 0 failed; 0 ignored; finished in 0.00s
 ```
 
 Measured over 1,000 iterations on AMD Ryzen 5:

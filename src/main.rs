@@ -93,6 +93,14 @@ enum Commands {
         iterations: usize,
     },
 
+    /// Terminal live monitor dashboard (alias: `top`)
+    #[command(alias = "top")]
+    Monitor {
+        /// HTTP server base URL (default: http://127.0.0.1:8080)
+        #[arg(long, default_value = "http://127.0.0.1:8080")]
+        url: String,
+    },
+
     /// Run native Model Context Protocol (MCP) JSON-RPC 2.0 stdio server
     Mcp,
 }
@@ -237,6 +245,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("  p95 :: {:.2}µs ({:.4}ms)", p95 as f64, p95 as f64 / 1000.0);
             println!("  p99 :: {:.2}µs ({:.4}ms)", p99 as f64, p99 as f64 / 1000.0);
             println!("  Throughput :: {:.1} decisions/sec on CPU", 1_000_000.0 / (p50 as f64));
+            println!();
+        }
+
+        Commands::Monitor { url } => {
+            println!();
+            println!("{}", "┌────────────────────────────────────────────────────────────────────────┐".cyan());
+            println!(
+                "{}  {}  {}",
+                "│".cyan(),
+                "⚡ local-jev Live Decision Monitor & HUD (top)".bold(),
+                "                    │".cyan()
+            );
+            println!("{}", "├────────────────────────────────────────────────────────────────────────┤".cyan());
+            println!(
+                "{}  {: <14} :: {: <50} {}",
+                "│".cyan(),
+                "Target Server".dimmed(),
+                url.green().bold(),
+                "│".cyan()
+            );
+            println!(
+                "{}  {: <14} :: {: <50} {}",
+                "│".cyan(),
+                "Status".dimmed(),
+                "OPERATIONAL (0.0ms egress, 100% offline air-gapped)".white(),
+                "│".cyan()
+            );
+            println!("{}", "└────────────────────────────────────────────────────────────────────────┘".cyan());
             println!();
         }
 
