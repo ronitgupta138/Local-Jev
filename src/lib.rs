@@ -7,3 +7,4 @@ pub mod mcp;
 pub mod telemetry;
 pub mod model;
 pub mod tensor;
+pub mod cascade;

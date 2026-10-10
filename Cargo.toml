@@ -1,6 +1,6 @@
 [package]
 name = "local-jev"
-version = "0.6.0"
+version = "0.7.0"
 edition = "2024"
 authors = ["Ronit Gupta <ronitgupta138@gmail.com>"]
 description = "100% Offline, Zero-Cost Drop-In Alternative to TypeSafe Jev System One Decision Models in Rust"
