@@ -240,6 +240,12 @@ fn get_semantic_synonyms(opt: &str) -> Vec<&'static str> {
     if lower.contains("parser") || lower.contains("inspect") {
         words.extend(&["parser", "module", "inspect", "syntax", "ast"]);
     }
+    if lower.contains("route") {
+        words.extend(&["route", "endpoint", "path", "url", "handler"]);
+    }
+    if lower.contains("db") || lower.contains("database") {
+        words.extend(&["database", "db", "sql", "table", "schema"]);
+    }
 
     if lower.contains("grep") || lower.contains("search") || lower.contains("find") {
         words.extend(&["search", "find", "codebase", "pattern", "symbol", "lookup", "scan", "where", "location"]);

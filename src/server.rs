@@ -5,6 +5,7 @@ use crate::domain::{
     RouteResponse, ScoreRequest, ScoreResponse,
 };
 use crate::engine::JevDecisionEngine;
+use crate::telemetry::EngineMetrics;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -16,10 +17,14 @@ use tower_http::cors::{Any, CorsLayer};
 
 pub struct AppState {
     pub engine: JevDecisionEngine,
+    pub metrics: EngineMetrics,
 }
 
 pub fn create_router(engine: JevDecisionEngine) -> Router {
-    let state = Arc::new(AppState { engine });
+    let state = Arc::new(AppState {
+        engine,
+        metrics: EngineMetrics::new(),
+    });
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -28,6 +33,7 @@ pub fn create_router(engine: JevDecisionEngine) -> Router {
 
     Router::new()
         .route("/health", get(health_handler))
+        .route("/metrics", get(metrics_handler))
         .route("/v1/models", get(models_handler))
         .route("/v1/systemone/choice", post(choice_handler))
         .route("/v1/systemone/score", post(score_handler))
@@ -44,6 +50,13 @@ async fn health_handler() -> impl IntoResponse {
         "version": "1.0.0",
         "offline": true
     }))
+}
+
+async fn metrics_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    (
+        [(axum::http::header::CONTENT_TYPE, "text/plain; version=0.0.4")],
+        state.metrics.format_prometheus(),
+    )
 }
 
 async fn models_handler() -> impl IntoResponse {
@@ -66,7 +79,10 @@ async fn choice_handler(
     state
         .engine
         .decide_choice(&payload)
-        .map(Json)
+        .map(|res| {
+            state.metrics.record_decision(res.latency_ms, res.cached);
+            Json(res)
+        })
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))
 }
 
