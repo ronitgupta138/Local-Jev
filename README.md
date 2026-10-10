@@ -12,10 +12,10 @@
 ### **100% Offline, Zero-Cost Drop-In Alternative to TypeSafe Jev System One Decisions**
 
 [![GitHub Stars](https://img.shields.io/github/stars/ronitgupta138/local-jev?style=flat-square&color=0891b2&labelColor=0a0b0e)](https://github.com/ronitgupta138/local-jev/stargazers)
-[![Crates.io](https://img.shields.io/badge/crates.io-v0.5.0-0891b2?style=flat-square&labelColor=0a0b0e)](https://crates.io/crates/local-jev)
+[![Crates.io](https://img.shields.io/badge/crates.io-v1.0.0-0891b2?style=flat-square&labelColor=0a0b0e)](https://crates.io/crates/local-jev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0891b2?style=flat-square&labelColor=0a0b0e)](LICENSE)
 [![Rust: 1.80+](https://img.shields.io/badge/Rust-1.80+-0891b2?style=flat-square&labelColor=0a0b0e)](https://www.rust-lang.org)
-[![Build Status](https://img.shields.io/badge/Tests-12%2F12%20Passing-0891b2?style=flat-square&labelColor=0a0b0e)](#-verification--benchmarks)
+[![Build Status](https://img.shields.io/badge/Tests-16%2F16%20Passing-0891b2?style=flat-square&labelColor=0a0b0e)](#-verification--benchmarks)
 [![Views](https://hits.sh/github.com/ronitgupta138/local-jev.svg?style=flat-square&label=Views&color=0891b2&labelColor=0a0b0e)](https://hits.sh/github.com/ronitgupta138/local-jev/)
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?style=flat-square&labelColor=0a0b0e)](https://github.com/sponsors/ronitgupta138)
 
@@ -207,7 +207,7 @@ cargo test
 ```
 
 ```
-running 12 tests
+running 16 tests
 test test_semantic_score_relevance ... ok
 test test_choice_selection_accuracy ... ok
 test test_agent_noul_classification ... ok
@@ -220,8 +220,14 @@ test test_model_backbone_file_loader ... ok
 test test_model_backbone_missing_file_error ... ok
 test test_prometheus_metrics_export ... ok
 test test_microbatch_scheduler_concurrent_queries ... ok
+test test_quantized_linear_forward ... ok
+test test_quantized_linear_unaligned_dimensions ... ok
+test test_cascade_high_confidence_short_circuit ... ok
+test test_cascade_ambiguous_fallback_flagging ... ok
+test test_bandit_learner_feedback_updates ... ok
+test test_vector_cosine_search ... ok
 
-test result: ok. 12 passed; 0 failed; 0 ignored; finished in 0.00s
+test result: ok. 16 passed; 0 failed; 0 ignored; finished in 0.00s
 ```
 
 Measured over 1,000 iterations on AMD Ryzen 5:

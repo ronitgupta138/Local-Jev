@@ -1,6 +1,6 @@
 {
   "name": "local-jev",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "100% Offline, Zero-Cost Drop-In Alternative to TypeSafe Jev System One Decisions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

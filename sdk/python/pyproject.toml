@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "local-jev"
-version = "0.5.0"
+version = "1.0.0"
 authors = [
   { name = "Ronit Gupta", email = "ronitgupta138@gmail.com" },
 ]
