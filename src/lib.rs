@@ -6,3 +6,4 @@ pub mod server;
 pub mod mcp;
 pub mod telemetry;
 pub mod model;
+pub mod tensor;
