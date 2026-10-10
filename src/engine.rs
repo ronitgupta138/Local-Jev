@@ -237,6 +237,10 @@ fn get_semantic_synonyms(opt: &str) -> Vec<&'static str> {
     let lower = opt.to_lowercase();
     let mut words = Vec::new();
 
+    if lower.contains("parser") || lower.contains("inspect") {
+        words.extend(&["parser", "module", "inspect", "syntax", "ast"]);
+    }
+
     if lower.contains("grep") || lower.contains("search") || lower.contains("find") {
         words.extend(&["search", "find", "codebase", "pattern", "symbol", "lookup", "scan", "where", "location"]);
     }

@@ -92,6 +92,9 @@ enum Commands {
         #[arg(long, default_value_t = 1000)]
         iterations: usize,
     },
+
+    /// Run native Model Context Protocol (MCP) JSON-RPC 2.0 stdio server
+    Mcp,
 }
 
 #[tokio::main]
@@ -235,6 +238,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("  p99 :: {:.2}µs ({:.4}ms)", p99 as f64, p99 as f64 / 1000.0);
             println!("  Throughput :: {:.1} decisions/sec on CPU", 1_000_000.0 / (p50 as f64));
             println!();
+        }
+
+        Commands::Mcp => {
+            let mcp = local_jev::mcp::McpServer::new();
+            let stdin = std::io::stdin();
+            let stdout = std::io::stdout();
+            mcp.run_loop(stdin.lock(), stdout.lock())?;
         }
     }
 
