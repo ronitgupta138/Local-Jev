@@ -73,7 +73,7 @@ impl BanditLearner {
     pub fn save_checkpoint(&self, path: &std::path::Path) -> Result<(), crate::domain::JevError> {
         let parent = path.parent().unwrap_or_else(|| std::path::Path::new("."));
         let mut tmp = tempfile::NamedTempFile::new_in(parent)
-            .map_err(|e| crate::domain::JevError::Io(e))?;
+            .map_err(crate::domain::JevError::Io)?;
 
         let map = self.priors.read()
             .map_err(|_| crate::domain::JevError::Inference("Failed to acquire read lock on bandit priors".to_string()))?
