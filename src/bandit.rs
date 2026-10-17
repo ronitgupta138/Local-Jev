@@ -68,4 +68,33 @@ impl BanditLearner {
         }
         0.0
     }
+
+    /// Atomically save bandit state to a JSON checkpoint on disk.
+    pub fn save_checkpoint(&self, path: &std::path::Path) -> Result<(), crate::domain::JevError> {
+        let parent = path.parent().unwrap_or_else(|| std::path::Path::new("."));
+        let mut tmp = tempfile::NamedTempFile::new_in(parent)
+            .map_err(|e| crate::domain::JevError::Io(e))?;
+
+        let map = self.priors.read()
+            .map_err(|_| crate::domain::JevError::Inference("Failed to acquire read lock on bandit priors".to_string()))?
+            .clone();
+
+        serde_json::to_writer_pretty(&mut tmp, &map)?;
+        tmp.persist(path).map_err(|e| crate::domain::JevError::Io(e.error))?;
+        Ok(())
+    }
+
+    /// Load bandit priors from a persistent checkpoint file.
+    pub fn load_checkpoint(&self, path: &std::path::Path) -> Result<usize, crate::domain::JevError> {
+        if !path.exists() {
+            return Ok(0);
+        }
+        let file = std::fs::File::open(path)?;
+        let map: HashMap<String, OptionPrior> = serde_json::from_reader(file)?;
+        let count = map.len();
+        if let Ok(mut lock) = self.priors.write() {
+            *lock = map;
+        }
+        Ok(count)
+    }
 }

@@ -1,8 +1,10 @@
 //! High-Performance Single-Forward-Pass Decision & Logit Engine.
 
 use crate::domain::{
-    ChoiceRequest, ChoiceResponse, JevError, NoulRequest, NoulResponse, OptionProbability,
-    RouteRequest, RouteResponse, ScoreRequest, ScoreResponse,
+    BatchChoiceRequest, BatchChoiceResponse, ChatChoice, ChatCompletionRequest,
+    ChatCompletionResponse, ChatResponseMessage, ChoiceRequest, ChoiceResponse,
+    FunctionCallDetails, JevError, NoulRequest, NoulResponse, OptionProbability,
+    RouteRequest, RouteResponse, ScoreRequest, ScoreResponse, ToolCall, Usage,
 };
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -177,6 +179,187 @@ impl JevDecisionEngine {
             confidence: choice_res.confidence,
             latency_ms: start.elapsed().as_secs_f64() * 1000.0,
         })
+    }
+
+    /// High-throughput batch decision processing across multiple queries.
+    pub fn decide_batch(&self, req: &BatchChoiceRequest) -> Result<BatchChoiceResponse, JevError> {
+        let start = Instant::now();
+        if req.requests.is_empty() {
+            return Err(JevError::BadRequest("Batch requests cannot be empty".to_string()));
+        }
+
+        let mut responses = Vec::with_capacity(req.requests.len());
+        for single_req in &req.requests {
+            let res = self.decide_choice(single_req)?;
+            responses.push(res);
+        }
+
+        let total_latency_ms = start.elapsed().as_secs_f64() * 1000.0;
+        let count = responses.len();
+        let throughput_qps = if total_latency_ms > 0.0 {
+            (count as f64 / (total_latency_ms / 1000.0)).round()
+        } else {
+            1_000_000.0
+        };
+
+        Ok(BatchChoiceResponse {
+            responses,
+            count,
+            total_latency_ms,
+            throughput_qps,
+        })
+    }
+
+    /// Speculative tool-call proxy matching OpenAI Chat Completions API.
+    pub fn speculative_chat_completion(
+        &self,
+        req: &ChatCompletionRequest,
+    ) -> Result<ChatCompletionResponse, JevError> {
+        let start = Instant::now();
+
+        // Extract last user message
+        let last_prompt = req
+            .messages
+            .iter()
+            .rev()
+            .find(|m| m.role == "user")
+            .map(|m| m.content.as_str())
+            .unwrap_or("");
+
+        let prompt_tokens = last_prompt.split_whitespace().count() + 10;
+
+        if let Some(tools) = &req.tools
+            && !tools.is_empty()
+        {
+            let tool_names: Vec<String> = tools.iter().map(|t| t.function.name.clone()).collect();
+            let choice_req = ChoiceRequest {
+                state: last_prompt.to_string(),
+                question: "Which tool should be called to accomplish this task?".to_string(),
+                options: tool_names,
+                temperature: 0.05,
+            };
+
+            let decision = self.decide_choice(&choice_req)?;
+
+            if decision.confidence >= 0.60 {
+                // Synthesize grammar-compliant arguments
+                let args_json = synthesize_tool_arguments(&decision.choice, last_prompt);
+                let call_id = format!("call_{}", uuid_fast());
+
+                let tool_call = ToolCall {
+                    id: call_id,
+                    tool_type: "function".to_string(),
+                    function: FunctionCallDetails {
+                        name: decision.choice.clone(),
+                        arguments: args_json,
+                    },
+                };
+
+                let latency_ms = start.elapsed().as_secs_f64() * 1000.0;
+                return Ok(ChatCompletionResponse {
+                    id: format!("chatcmpl-speculative-{}", uuid_fast()),
+                    object: "chat.completion".to_string(),
+                    created: std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs(),
+                    model: req.model.clone().unwrap_or_else(|| "local-jev-speculative".to_string()),
+                    choices: vec![ChatChoice {
+                        index: 0,
+                        message: ChatResponseMessage {
+                            role: "assistant".to_string(),
+                            content: None,
+                            tool_calls: Some(vec![tool_call]),
+                        },
+                        finish_reason: "tool_calls".to_string(),
+                    }],
+                    usage: Usage {
+                        prompt_tokens,
+                        completion_tokens: 15,
+                        total_tokens: prompt_tokens + 15,
+                    },
+                    speculative: true,
+                    confidence: decision.confidence,
+                    latency_ms,
+                });
+            }
+        }
+
+        // Fallback standard text response if no tool was eligible
+        let latency_ms = start.elapsed().as_secs_f64() * 1000.0;
+        Ok(ChatCompletionResponse {
+            id: format!("chatcmpl-jev-{}", uuid_fast()),
+            object: "chat.completion".to_string(),
+            created: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs(),
+            model: req.model.clone().unwrap_or_else(|| "local-jev-v2".to_string()),
+            choices: vec![ChatChoice {
+                index: 0,
+                message: ChatResponseMessage {
+                    role: "assistant".to_string(),
+                    content: Some("Speculative evaluation completed; prompt requires generative reasoning.".to_string()),
+                    tool_calls: None,
+                },
+                finish_reason: "stop".to_string(),
+            }],
+            usage: Usage {
+                prompt_tokens,
+                completion_tokens: 12,
+                total_tokens: prompt_tokens + 12,
+            },
+            speculative: false,
+            confidence: 0.50,
+            latency_ms,
+        })
+    }
+}
+
+fn uuid_fast() -> String {
+    use std::time::SystemTime;
+    let nanos = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    format!("{:x}", nanos)
+}
+
+fn synthesize_tool_arguments(tool: &str, prompt: &str) -> String {
+    let lower_tool = tool.to_lowercase();
+    let lower_prompt = prompt.to_lowercase();
+
+    if lower_tool.contains("read") || lower_tool.contains("cat") {
+        // Extract plausible path
+        let path = prompt
+            .split_whitespace()
+            .find(|w| w.contains('.') || w.contains('/') || w.ends_with(".rs") || w.ends_with(".py") || w.ends_with(".json") || w.ends_with(".toml") || w.ends_with(".md"))
+            .unwrap_or("README.md");
+        let clean_path = path.trim_matches(|c| c == '\'' || c == '"' || c == '`' || c == ',');
+        serde_json::json!({ "path": clean_path }).to_string()
+    } else if lower_tool.contains("search") || lower_tool.contains("grep") {
+        // Extract query
+        let query = prompt
+            .split('"')
+            .nth(1)
+            .or_else(|| prompt.split('\'').nth(1))
+            .unwrap_or_else(|| {
+                if lower_prompt.contains("find") {
+                    "find"
+                } else {
+                    prompt.split_whitespace().last().unwrap_or("query")
+                }
+            });
+        serde_json::json!({ "pattern": query }).to_string()
+    } else if lower_tool.contains("terminal") || lower_tool.contains("bash") || lower_tool.contains("exec") {
+        // Extract command if quoted, or take prompt
+        let cmd = prompt
+            .split('`')
+            .nth(1)
+            .unwrap_or(prompt);
+        serde_json::json!({ "command": cmd.trim() }).to_string()
+    } else {
+        serde_json::json!({ "query": prompt }).to_string()
     }
 }
 

@@ -109,11 +109,65 @@ async fn test_typesafe_http_server_endpoints() {
         .body(Body::from(serde_json::to_vec(&choice_payload).unwrap()))
         .unwrap();
 
-    let response = app.oneshot(req).await.unwrap();
+    let response = app.clone().oneshot(req).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     let bytes = response.into_body().collect().await.unwrap().to_bytes();
     let choice_json: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
     assert_eq!(choice_json["choice"], "grep -rn login");
     assert_eq!(choice_json["cached"], false);
+
+    // 4. /v1/systemone/batch endpoint
+    let batch_payload = serde_json::json!({
+        "requests": [
+            {
+                "state": "Compiler unresolved import",
+                "question": "Tool?",
+                "options": ["cargo check", "reboot"],
+                "temperature": 0.1
+            }
+        ]
+    });
+
+    let req = Request::builder()
+        .method("POST")
+        .uri("/v1/systemone/batch")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_vec(&batch_payload).unwrap()))
+        .unwrap();
+
+    let response = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // 5. /v1/chat/completions endpoint
+    let chat_payload = serde_json::json!({
+        "model": "claude-3-5-sonnet",
+        "messages": [
+            { "role": "user", "content": "Please inspect README.md file" }
+        ],
+        "tools": [
+            {
+                "type": "function",
+                "function": { "name": "read_file" }
+            }
+        ]
+    });
+
+    let req = Request::builder()
+        .method("POST")
+        .uri("/v1/chat/completions")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_vec(&chat_payload).unwrap()))
+        .unwrap();
+
+    let response = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let bytes = response.into_body().collect().await.unwrap().to_bytes();
+    let chat_res: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(chat_res["speculative"], true);
+
+    // 6. /metrics endpoint
+    let req = Request::builder().uri("/metrics").body(Body::empty()).unwrap();
+    let response = app.oneshot(req).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
 }

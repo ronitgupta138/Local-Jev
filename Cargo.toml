@@ -1,12 +1,12 @@
 [package]
 name = "local-jev"
-version = "1.0.0"
+version = "2.0.0"
 edition = "2024"
 authors = ["Ronit Gupta <ronitgupta138@gmail.com>"]
 description = "100% Offline, Zero-Cost Drop-In Alternative to TypeSafe Jev System One Decision Models in Rust"
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/ronitgupta138/local-jev"
+repository = "https://github.com/ronitgupta138/Local-Jev"
 
 [dependencies]
 axum = { version = "0.7", features = ["macros"] }

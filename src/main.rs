@@ -12,7 +12,7 @@ use std::time::Instant;
 #[command(
     name = "local-jev",
     author = "Ronit Gupta <ronitgupta138@gmail.com>",
-    version = "1.0.0",
+    version = "2.0.0",
     about = "100% Offline, Zero-Cost Drop-In Alternative to TypeSafe Jev System One Decisions"
 )]
 struct Cli {

@@ -1,6 +1,7 @@
 //! High-Concurrency Axum REST Server Compatible with TypeSafe Jev API.
 
 use crate::domain::{
+    BatchChoiceRequest, BatchChoiceResponse, ChatCompletionRequest, ChatCompletionResponse,
     ChoiceRequest, ChoiceResponse, ModelInfo, NoulRequest, NoulResponse, RouteRequest,
     RouteResponse, ScoreRequest, ScoreResponse,
 };
@@ -36,9 +37,11 @@ pub fn create_router(engine: JevDecisionEngine) -> Router {
         .route("/metrics", get(metrics_handler))
         .route("/v1/models", get(models_handler))
         .route("/v1/systemone/choice", post(choice_handler))
+        .route("/v1/systemone/batch", post(batch_handler))
         .route("/v1/systemone/score", post(score_handler))
         .route("/v1/systemone/noul", post(noul_handler))
         .route("/v1/systemone/route", post(route_handler))
+        .route("/v1/chat/completions", post(chat_completions_handler))
         .layer(cors)
         .with_state(state)
 }
@@ -47,8 +50,9 @@ async fn health_handler() -> impl IntoResponse {
     Json(json!({
         "status": "ok",
         "service": "local-jev",
-        "version": "1.0.0",
-        "offline": true
+        "version": "2.0.0",
+        "offline": true,
+        "speculative_proxy": true
     }))
 }
 
@@ -81,6 +85,40 @@ async fn choice_handler(
         .decide_choice(&payload)
         .map(|res| {
             state.metrics.record_decision(res.latency_ms, res.cached);
+            Json(res)
+        })
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))
+}
+
+async fn batch_handler(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<BatchChoiceRequest>,
+) -> Result<Json<BatchChoiceResponse>, (StatusCode, String)> {
+    state
+        .engine
+        .decide_batch(&payload)
+        .map(|res| {
+            state.metrics.record_batch(res.count);
+            for r in &res.responses {
+                state.metrics.record_decision(r.latency_ms, r.cached);
+            }
+            Json(res)
+        })
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))
+}
+
+async fn chat_completions_handler(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<ChatCompletionRequest>,
+) -> Result<Json<ChatCompletionResponse>, (StatusCode, String)> {
+    state
+        .engine
+        .speculative_chat_completion(&payload)
+        .map(|res| {
+            if res.speculative {
+                state.metrics.record_speculative_hit();
+            }
+            state.metrics.record_decision(res.latency_ms, false);
             Json(res)
         })
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))
