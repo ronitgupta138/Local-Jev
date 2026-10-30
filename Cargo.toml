@@ -11,7 +11,7 @@ repository = "https://github.com/ronitgupta138/Local-Jev"
 [dependencies]
 axum = { version = "0.7", features = ["macros"] }
 tokio = { version = "1.40", features = ["full"] }
-tower-http = { version = "0.5", features = ["cors", "trace"] }
+tower-http = { version = "0.7", features = ["cors", "trace"] }
 tower = { version = "0.4", features = ["util"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
