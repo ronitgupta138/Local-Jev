@@ -11,3 +11,4 @@ pub mod cascade;
 pub mod bandit;
 pub mod vector;
 pub mod thompson_sampling;
+pub mod cascade_evaluator;
