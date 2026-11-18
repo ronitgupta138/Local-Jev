@@ -12,3 +12,4 @@ pub mod bandit;
 pub mod vector;
 pub mod thompson_sampling;
 pub mod cascade_evaluator;
+pub mod quant_int4;
