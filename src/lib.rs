@@ -13,3 +13,4 @@ pub mod vector;
 pub mod thompson_sampling;
 pub mod cascade_evaluator;
 pub mod quant_int4;
+pub mod latency_tracker;
