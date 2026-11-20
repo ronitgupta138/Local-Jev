@@ -16,7 +16,7 @@ impl Int4Vector {
         let max = floats.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
         let scale = if max > min { (max - min) / 15.0 } else { 1.0 };
 
-        let mut packed = Vec::with_capacity((floats.len() + 1) / 2);
+        let mut packed = Vec::with_capacity(floats.len().div_ceil(2));
         for chunk in floats.chunks(2) {
             let q0 = (((chunk[0] - min) / scale).round() as u8).min(15);
             let q1 = if chunk.len() > 1 {
