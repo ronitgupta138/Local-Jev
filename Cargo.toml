@@ -9,7 +9,7 @@ readme = "README.md"
 repository = "https://github.com/ronitgupta138/Local-Jev"
 
 [dependencies]
-axum = { version = "0.7", features = ["macros"] }
+axum = { version = "0.8", features = ["macros"] }
 tokio = { version = "1.40", features = ["full"] }
 tower-http = { version = "0.5", features = ["cors", "trace"] }
 tower = { version = "0.4", features = ["util"] }
